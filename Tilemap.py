@@ -3,26 +3,26 @@ WIN_WIDTH = 640
 WIN_HEIGHT = 480
 TILESIZE = 32
 
-# Class representing a Tilemap
 class Tilemap:
     def __init__(self):
-        # Initialize the map with a default character '.'
-        self.smooth = [['.'] * ((WIN_WIDTH // TILESIZE) * 2)] * ((WIN_HEIGHT // TILESIZE) * 2)
-        self.map = [['.'] * ((WIN_WIDTH // TILESIZE) * 2)] * ((WIN_HEIGHT // TILESIZE) * 2)
-        # Define references to neighboring Tilemap instances
+        # Initialize the map and its variations
+        self.smooth = [['.'] * ((WIN_WIDTH//TILESIZE)*2)] * ((WIN_HEIGHT//TILESIZE)*2)
+        self.map = [['.'] * ((WIN_WIDTH//TILESIZE)*2)] * ((WIN_HEIGHT//TILESIZE)*2)
+        
+        # Initialize adjacent tilemaps to None
         self.right = None
         self.left = None
         self.top = None
         self.bottom = None
-
+    
     def set_map(self, tile):
-        # Set the map based on the provided tile
-        x = ((WIN_HEIGHT // TILESIZE) // 2)
-        y = ((WIN_WIDTH // TILESIZE) // 2)
-        for i in range((WIN_HEIGHT // TILESIZE)):
-            self.map[i + x] = self.map[i + x][:y] + tile[i] + self.map[i + x][-y:]
+        # Set the map using a given tile pattern
+        x = ((WIN_HEIGHT//TILESIZE)//2)
+        y = ((WIN_WIDTH//TILESIZE)//2)
+        for i in range((WIN_HEIGHT//TILESIZE)):
+            self.map[i+x] = self.map[i+x][:y] + tile[i] + self.map[i+x][-y:]
 
-        # Check and create neighboring Tilemap instances if needed
+        # Create adjacent tilemaps if the current map is not smooth
         if self.map != self.smooth:
             if not self.right:
                 self.right = Tilemap()
@@ -37,36 +37,54 @@ class Tilemap:
                 self.bottom = Tilemap()
                 self.bottom.top = self
         self.fix_map()
-
+    
     def fix_map(self):
-        # Adjust the neighboring maps to ensure continuity
-        x = ((WIN_HEIGHT // TILESIZE) // 2)
-        y = ((WIN_WIDTH // TILESIZE) // 2)
-        height = WIN_HEIGHT // TILESIZE
-        width = WIN_WIDTH // TILESIZE
+        # Adjust adjacent tilemaps to ensure continuity
+        x = ((WIN_HEIGHT//TILESIZE)//2)
+        y = ((WIN_WIDTH//TILESIZE)//2)
+        height = WIN_HEIGHT//TILESIZE
+        width = WIN_WIDTH//TILESIZE
         for i in range(height):
-            self.right.map[i + x] = self.map[i + x][width:width + y] + self.right.map[i + x][y:]
-            self.left.map[i + x] = self.left.map[i + x][:width + y] + self.map[i + x][y:width]
+            self.right.map[i+x] =  self.map[i+x][width:width+y] + self.right.map[i+x][y:]
+            self.left.map[i+x] = self.left.map[i+x][:width+y] + self.map[i+x][y:width]
 
-        for j in range(x + 1):
-            self.top.map[j + height + x] = self.top.map[j + height + x][:y] + self.map[x + j][y:width + y] + \
-                                           self.top.map[j + height + x][y + width:]
-            self.bottom.map[j] = self.bottom.map[j][:y] + self.map[height + j][y:width + y] + self.bottom.map[j][y + width:]
-
-# Create an instance of the Tilemap class
+        for j in range(x+1):
+            self.top.map[j+height+x] = self.top.map[j+height+x][:y] + self.map[x+j][y:width+y] + self.top.map[j+height+x][y+width:]
+            self.bottom.map[j] = self.bottom.map[j][:y] + self.map[height+j][y:width+y] + self.bottom.map[j][y+width:]
+    
+    def set_map_right(self, tilemapp):
+        # Set the map to the right using another tilemap
+        self.right.set_map(tilemapp)
+        self.right.left = self
+    
+    def set_map_left(self, tilemapp):
+        # Set the map to the left using another tilemap
+        self.left.set_map(tilemapp)
+        self.left.right = self
+    
+    def set_map_top(self, tilemapp):
+        # Set the map to the top using another tilemap
+        self.top.set_map(tilemapp)
+        self.top.bottom = self
+    
+    def set_map_bottom(self, tilemapp):
+        # Set the map to the bottom using another tilemap
+        self.bottom.set_map(tilemapp)
+        self.bottom.top = self
+# Create a Tilemap instance
 Tile = Tilemap()
 
-# Define the initial tilemap
-tilemap = [
+# Define tilemaps
+tilemapp = [
     ['B', 'B', 'B' , 'B', 'B', 'B', 'B', '.', '.', '.', '.', '.', '.', 'B', 'B', 'B', 'B', 'B', 'B', 'B'],
     ['B', '.', '.' , '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', '.', '.' , '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
-    ['B', '.', '.' , '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', '.', '.' , '.', '.', '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
+    ['B', '.', '.' , '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['.', '.', '.' , 'B', 'B', 'B', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
-    ['.', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B', '.', '.', '.'],
-    ['.', '.', '.' , '.', '.', '.', '.', '.', 'B', '.', 'B', 'B', '.', '.', '.', 'B', 'B', 'B', '.', '.'],
-    ['.', '.', '.' , '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B', '.', '.', '.'],
+    ['.', '.', '.' , '.', 'B', '.', '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', 'B', '.', '.', '.'],
+    ['.', '.', '.' , '.', '.', '.', '.', '.', 'B', 'B', 'B', '.', '.', '.', '.', 'B', 'B', 'B', '.', '.'],
+    ['.', '.', '.' , '.', '.', '.', 'B', '.', '.', 'B', '.', '.', '.', '.', '.', '.', 'B', '.', '.', '.'],
     ['.', '.', '.' , 'B', 'B', 'B', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
     ['B', '.', '.' , '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', '.', '.' , '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
@@ -74,10 +92,10 @@ tilemap = [
     ['B', '.', '.' , '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', 'B', 'B' , 'B', 'B', 'B', 'B', '.', '.', '.', '.', '.', '.', 'B', 'B', 'B', 'B', 'B', 'B', 'B']
 ]
-# Set the initial tilemap
-Tile.set_map(tilemap)
+Tile.set_map(tilemapp)
 
-tilemap = [
+# Define tilemaps
+tilemapp = [
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
@@ -94,10 +112,10 @@ tilemap = [
     ['B', '.', '.' , '.', '.', 'B', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', 'B', 'B' , 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B']
 ]
-# Set the initial tilemap
-Tile.bottom.set_map(tilemap)
+Tile.set_map_bottom(tilemapp)
 
-tilemap = [
+# Define tilemaps
+tilemapp = [
     ['B', 'B', 'B' , 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B'],
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
@@ -114,10 +132,10 @@ tilemap = [
     ['B', '.', '.' , '.', '.', 'B', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['B', '.', '.' , '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B']
 ]
-# Set the initial tilemap
-Tile.top.set_map(tilemap)
+Tile.set_map_top(tilemapp)
 
-tilemap = [
+# Define tilemaps
+tilemapp = [
     ['.', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['.', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['.', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
@@ -134,10 +152,10 @@ tilemap = [
     ['.', '.', '.' , '.', '.', 'B', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B'],
     ['.', '.', '.' , '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'B']
 ]
-# Set the initial tilemap
-Tile.right.set_map(tilemap)
+Tile.set_map_right(tilemapp)
 
-tilemap = [
+# Define tilemaps
+tilemapp = [
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
     ['B', '.', '.' , '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
@@ -154,11 +172,11 @@ tilemap = [
     ['B', '.', '.' , '.', '.', 'B', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
     ['B', '.', '.' , '.', '.', '.', 'B', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
 ]
-# Set the initial tilemap
-Tile.left.set_map(tilemap)
+Tile.set_map_left(tilemapp)
 
-# Print the resulting map
-for i in Tile.map:
+
+# Print the final tilemap configuration
+for i in Tile.right.left.map:
     for j in i:
         print(j, end='')
     print()
