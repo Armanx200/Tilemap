@@ -7,3 +7,5 @@ Key Features:
 - Dynamic handling of top, bottom, left, and right parts of the map.
 - Methods for setting and fixing the map to ensure continuity.
 - Example usage with an initial tilemap configuration.
+
+Arman Kianian
